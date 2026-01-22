@@ -62,8 +62,7 @@ export async function initDatabase() {
       location TEXT,
       tags TEXT,
       photos TEXT,
-      video_url TEXT,
-      media_path TEXT,
+      videos TEXT,
       created_at INTEGER NOT NULL,
       updated_at INTEGER NOT NULL,
       FOREIGN KEY (timeline_id) REFERENCES timelines(id) ON DELETE CASCADE
@@ -77,6 +76,13 @@ export async function initDatabase() {
   db.run(`
     CREATE INDEX IF NOT EXISTS idx_records_date ON records(date)
   `)
+  
+  // 迁移：添加 videos 列（如果不存在）
+  try {
+    db.run(`ALTER TABLE records ADD COLUMN videos TEXT DEFAULT '[]'`)
+  } catch (e) {
+    // 列可能已存在，忽略错误
+  }
   
   saveDatabase()
   

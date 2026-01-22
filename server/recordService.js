@@ -18,7 +18,8 @@ export function getRecordsByTimelineId(timelineId) {
   return results.map(record => ({
     ...record,
     tags: record.tags ? JSON.parse(record.tags) : [],
-    photos: record.photos ? JSON.parse(record.photos) : []
+    photos: record.photos ? JSON.parse(record.photos) : [],
+    videos: record.videos ? JSON.parse(record.videos) : []
   }))
 }
 
@@ -32,7 +33,10 @@ export function getRecordById(id) {
   return {
     ...result,
     tags: result.tags ? JSON.parse(result.tags) : [],
-    photos: result.photos ? JSON.parse(result.photos) : []
+    photos: result.photos ? JSON.parse(result.photos) : [],
+    videos: result.videos ? JSON.parse(result.videos) : []
+  }
+}
   }
 }
 
@@ -43,14 +47,14 @@ export function createRecord(data) {
   const now = Date.now()
   
   const photos = data.photos ? JSON.stringify(data.photos) : '[]'
+  const videos = data.videos ? JSON.stringify(data.videos) : '[]'
   const tags = data.tags ? JSON.stringify(data.tags) : '[]'
   
   const id = run(
     `INSERT INTO records (
       timeline_id, title, description, date, type, level,
-      location, tags, photos, video_url, media_path,
-      created_at, updated_at
-    ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+      location, tags, photos, videos, created_at, updated_at
+    ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
     [
       data.timelineId,
       data.title,
@@ -61,8 +65,7 @@ export function createRecord(data) {
       data.location || '',
       tags,
       photos,
-      data.videoUrl || '',
-      data.mediaPath || '',
+      videos,
       now,
       now
     ],

@@ -114,34 +114,32 @@
               </div>
             </div>
             
+            <!-- 照片上传 -->
             <div class="form-row" v-if="form.type === 'photo'">
               <div class="form-group full">
-                <label>照片链接</label>
-                <div class="photo-urls">
-                  <div 
-                    v-for="(url, idx) in form.photoUrls" 
-                    :key="idx"
-                    class="photo-url-row"
-                  >
-                    <input 
-                      v-model="form.photoUrls[idx]" 
-                      type="url" 
-                      placeholder="https://..."
-                    />
-                    <button type="button" @click="removePhotoUrl(idx)" v-if="form.photoUrls.length > 1">×</button>
-                  </div>
-                  <button type="button" class="add-url-btn" @click="addPhotoUrl">+ 添加照片</button>
-                </div>
+                <label>照片上传</label>
+                <FileUploader
+                  ref="photoUploader"
+                  :date="form.date"
+                  accept-types="image/*"
+                  :max-files="9"
+                  placeholder="点击或拖拽上传照片"
+                  @update:files="handlePhotosUpdate"
+                />
               </div>
             </div>
             
+            <!-- 视频上传 -->
             <div class="form-row" v-if="form.type === 'video'">
               <div class="form-group full">
-                <label>视频链接</label>
-                <input 
-                  v-model="form.videoUrl" 
-                  type="url" 
-                  placeholder="https://..."
+                <label>视频上传</label>
+                <FileUploader
+                  ref="videoUploader"
+                  :date="form.date"
+                  accept-types="video/*"
+                  :max-files="1"
+                  placeholder="点击或拖拽上传视频"
+                  @update:files="handleVideosUpdate"
                 />
               </div>
             </div>
@@ -168,15 +166,17 @@
  * 1. 提供新建记录的表单界面
  * 2. 支持标题、日期、类型、重要程度等字段
  * 3. 支持添加描述、地点、标签
- * 4. 照片类型支持多张图片链接
- * 5. 视频类型支持视频链接
- * 6. 表单验证和提交处理
+ * 4. 照片/视频类型支持文件上传
+ * 5. 表单验证和提交处理
  */
 
-import { ref, computed, reactive } from 'vue'
+import { ref, computed, reactive, watch } from 'vue'
+import FileUploader from './FileUploader.vue'
 
 const emit = defineEmits(['close', 'save'])
 
+const photoUploader = ref(null)
+const videoUploader = ref(null)
 const tagInput = ref('')
 
 /** 新建记录的表单数据 */
@@ -188,12 +188,16 @@ const form = reactive({
   description: '',
   location: '',
   tags: [],
-  photoUrls: [''],
-  videoUrl: ''
+  photos: [],
+  videos: []
 })
 
 const isValid = computed(() => {
-  return form.title.trim() && form.date
+  const hasBasicInfo = form.title.trim() && form.date
+  const hasMedia = form.type === 'text' || 
+    (form.type === 'photo' && form.photos.length > 0) ||
+    (form.type === 'video' && form.videos.length > 0)
+  return hasBasicInfo && hasMedia
 })
 
 const addTag = () => {
@@ -208,12 +212,12 @@ const removeTag = (idx) => {
   form.tags.splice(idx, 1)
 }
 
-const addPhotoUrl = () => {
-  form.photoUrls.push('')
+const handlePhotosUpdate = (paths) => {
+  form.photos = paths
 }
 
-const removePhotoUrl = (idx) => {
-  form.photoUrls.splice(idx, 1)
+const handleVideosUpdate = (paths) => {
+  form.videos = paths
 }
 
 const handleSubmit = () => {
@@ -228,12 +232,27 @@ const handleSubmit = () => {
     description: form.description.trim(),
     location: form.location.trim(),
     tags: [...form.tags],
-    photos: form.type === 'photo' ? form.photoUrls.filter(u => u.trim()) : undefined,
-    videoUrl: form.type === 'video' ? form.videoUrl.trim() : undefined
+    photos: form.type === 'photo' ? form.photos : [],
+    videos: form.type === 'video' ? form.videos : []
   }
   
   emit('save', record)
 }
+
+// 监听类型变化，清空已上传的文件
+watch(() => form.type, (newType) => {
+  if (newType === 'photo') {
+    if (videoUploader.value) {
+      videoUploader.value.clearFiles()
+    }
+    form.videos = []
+  } else if (newType === 'video') {
+    if (photoUploader.value) {
+      photoUploader.value.clearFiles()
+    }
+    form.photos = []
+  }
+})
 </script>
 
 <style scoped>
@@ -433,53 +452,6 @@ const handleSubmit = () => {
   background: transparent !important;
   padding: 4px !important;
   box-shadow: none !important;
-}
-
-.photo-urls {
-  display: flex;
-  flex-direction: column;
-  gap: 8px;
-}
-
-.photo-url-row {
-  display: flex;
-  gap: 8px;
-}
-
-.photo-url-row input {
-  flex: 1;
-}
-
-.photo-url-row button {
-  width: 32px;
-  height: 32px;
-  border: none;
-  background: #f0f0f0;
-  border-radius: 6px;
-  cursor: pointer;
-  color: #999;
-  font-size: 16px;
-}
-
-.photo-url-row button:hover {
-  background: #e0e0e0;
-  color: #e74c3c;
-}
-
-.add-url-btn {
-  padding: 8px;
-  border: 1px dashed #ddd;
-  border-radius: 6px;
-  background: transparent;
-  cursor: pointer;
-  color: #7d8a9a;
-  font-size: 13px;
-  transition: all 0.2s ease;
-}
-
-.add-url-btn:hover {
-  border-color: #7d8a9a;
-  background: rgba(125, 138, 154, 0.05);
 }
 
 .form-actions {
