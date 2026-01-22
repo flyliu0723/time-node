@@ -147,9 +147,10 @@ export const useTimelineStore = defineStore('timeline', () => {
           type: r.type,
           level: r.level,
           location: r.location,
-          tags: r.tags ? JSON.parse(r.tags) : [],
-          photos: r.photos ? JSON.parse(r.photos) : [],
-          videoUrl: r.video_url,
+          tags: r.tags || [],
+          photos: (r.photos || []).map(p => '/uploads/image/' + p),
+          videos: (r.videos || []).map(v => '/uploads/video/' + v),
+          videoUrl: r.video_url ? '/uploads/video/' + r.video_url : null,
           mediaPath: r.media_path,
           createdAt: r.created_at,
           updatedAt: r.updated_at
@@ -180,7 +181,23 @@ export const useTimelineStore = defineStore('timeline', () => {
     try {
       loading.value = true
       const result = await api.getRecords(timelineId)
-      records.value = result.data || []
+      records.value = (result.data || []).map(r => ({
+        id: r.id,
+        timelineId: r.timeline_id,
+        title: r.title,
+        description: r.description,
+        date: r.date,
+        type: r.type,
+        level: r.level,
+        location: r.location,
+        tags: r.tags || [],
+        photos: (r.photos || []).map(p => '/uploads/image/' + p),
+        videos: (r.videos || []).map(v => '/uploads/video/' + v),
+        videoUrl: r.video_url ? '/uploads/video/' + r.video_url : null,
+        mediaPath: r.media_path,
+        createdAt: r.created_at,
+        updatedAt: r.updated_at
+      }))
     } catch (err) {
       error.value = err.message
       console.error('加载记录失败:', err)
@@ -297,7 +314,25 @@ export const useTimelineStore = defineStore('timeline', () => {
       const result = await api.createRecord(currentTimelineId.value, record)
       
       if (result.data) {
-        records.value.push(result.data)
+        const r = result.data
+        const mappedRecord = {
+          id: r.id,
+          timelineId: r.timeline_id,
+          title: r.title,
+          description: r.description,
+          date: r.date,
+          type: r.type,
+          level: r.level,
+          location: r.location,
+          tags: r.tags || [],
+          photos: (r.photos || []).map(p => '/uploads/image/' + p),
+          videos: (r.videos || []).map(v => '/uploads/video/' + v),
+          videoUrl: r.video_url ? '/uploads/video/' + r.video_url : null,
+          mediaPath: r.media_path,
+          createdAt: r.created_at,
+          updatedAt: r.updated_at
+        }
+        records.value.push(mappedRecord)
         records.value.sort((a, b) => new Date(a.date) - new Date(b.date))
         return result.data
       }
@@ -318,9 +353,27 @@ export const useTimelineStore = defineStore('timeline', () => {
       const result = await api.updateRecord(id, updates)
       
       if (result.data) {
-        const index = records.value.findIndex(r => r.id === id)
+        const r = result.data
+        const mappedRecord = {
+          id: r.id,
+          timelineId: r.timeline_id,
+          title: r.title,
+          description: r.description,
+          date: r.date,
+          type: r.type,
+          level: r.level,
+          location: r.location,
+          tags: r.tags || [],
+          photos: (r.photos || []).map(p => '/uploads/image/' + p),
+          videos: (r.videos || []).map(v => '/uploads/video/' + v),
+          videoUrl: r.video_url ? '/uploads/video/' + r.video_url : null,
+          mediaPath: r.media_path,
+          createdAt: r.created_at,
+          updatedAt: r.updated_at
+        }
+        const index = records.value.findIndex(rec => rec.id === id)
         if (index >= 0) {
-          records.value[index] = result.data
+          records.value[index] = mappedRecord
         }
       }
     } catch (err) {

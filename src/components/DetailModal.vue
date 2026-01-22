@@ -32,8 +32,8 @@
             
             <div v-else-if="record.type === 'video'" class="video-container">
               <video 
-                v-if="record.videoUrl" 
-                :src="record.videoUrl" 
+                v-if="record.videos?.length" 
+                :src="record.videos[0]" 
                 controls
                 autoplay
               ></video>

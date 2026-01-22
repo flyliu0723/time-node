@@ -13,7 +13,7 @@ import crypto from 'crypto'
 const __filename = fileURLToPath(import.meta.url)
 const __dirname = path.dirname(__filename)
 
-const DATA_DIR = path.resolve(__dirname, '../../data')
+const DATA_DIR = path.resolve(__dirname, '../data')
 const IMAGE_DIR = path.join(DATA_DIR, 'image')
 const VIDEO_DIR = path.join(DATA_DIR, 'video')
 
@@ -168,11 +168,11 @@ export function handleUpload(req, res, next) {
       const result = {
         originalName: req.file.originalname,
         fileName: fileName,
-        filePath: relativePath, // 存储相对路径
+        filePath: relativePath.replace(/\\/g, '/'), // 存储相对路径，使用正斜杠
         fullPath: targetPath,   // 完整路径
         fileType,
         date: dateStr,
-        url: `/uploads/${fileType}/${relativePath}`,
+        url: `/uploads/${fileType}/${relativePath}`.replace(/\\/g, '/'),
         size: req.file.size,
         mimeType: req.file.mimetype
       }
@@ -226,11 +226,11 @@ export function handleMultipleUpload(req, res, next) {
         return {
           originalName: file.originalname,
           fileName: fileName,
-          filePath: relativePath,
+          filePath: relativePath.replace(/\\/g, '/'),
           fullPath: targetPath,
           fileType,
           date: dateStr,
-          url: `/uploads/${fileType}/${relativePath}`,
+          url: `/uploads/${fileType}/${relativePath}`.replace(/\\/g, '/'),
           size: file.size,
           mimeType: file.mimetype
         }

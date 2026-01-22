@@ -106,7 +106,7 @@
               <div v-if="record.type === 'photo'" class="photo-preview">
                 <div class="photo-grid" v-if="record.photos?.length > 1">
                   <div 
-                    v-for="(photo, idx) in record.photos.slice(0, 4)" 
+                    v-for="(photo, idx) in record.photos.slice(0, 2)" 
                     :key="idx"
                     class="photo-item"
                     :style="{ backgroundImage: `url(${photo})` }"
@@ -269,7 +269,7 @@ const getTagColor = (tag) => {
 
 .node-connector {
   position: absolute;
-  width: 160px;
+  width: 180px;
   height: 1px;
   background: linear-gradient(90deg, rgba(180, 180, 180, 0.4), transparent);
   transition: all 0.3s ease;
@@ -285,7 +285,7 @@ const getTagColor = (tag) => {
 }
 
 .node-content {
-  width: 160px;
+  width: 180px;
   position: absolute;
   transition: all 0.3s ease;
 }
@@ -321,6 +321,8 @@ const getTagColor = (tag) => {
   border-radius: 12px;
   background: white;
   transition: all 0.3s ease;
+  overflow: hidden;
+  max-height: 200px;
 }
 
 .node-card-wrapper.level-3 {
@@ -380,6 +382,9 @@ const getTagColor = (tag) => {
   padding: 10px;
   cursor: pointer;
   transition: all 0.3s cubic-bezier(0.25, 0.46, 0.45, 0.94);
+  overflow: hidden;
+  max-height: 230px;
+  contain: content;
 }
 
 .node-card:hover {
@@ -401,7 +406,6 @@ const getTagColor = (tag) => {
 .level-indicator {
   display: flex;
   align-items: center;
-  margin-bottom: 6px;
 }
 
 .node-content.right .level-indicator {
@@ -517,7 +521,7 @@ const getTagColor = (tag) => {
   display: flex;
   align-items: center;
   gap: 6px;
-  margin-bottom: 8px;
+  margin-bottom: 3px;
 }
 
 .node-content.right .card-header {
@@ -559,10 +563,14 @@ const getTagColor = (tag) => {
   font-size: 12px;
   font-weight: 600;
   color: #444;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 
 .card-preview-mini {
   margin-bottom: 6px;
+  overflow: hidden;
 }
 
 .card-description-mini {
@@ -570,6 +578,9 @@ const getTagColor = (tag) => {
   color: #777;
   line-height: 1.5;
   margin: 4px 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 
 .card-tags-mini {
@@ -589,10 +600,12 @@ const getTagColor = (tag) => {
 
 .card-preview {
   margin-bottom: 8px;
+  overflow: hidden;
 }
 
 .photo-preview {
   margin-bottom: 6px;
+  overflow: hidden;
 }
 
 .photo-grid {
@@ -608,6 +621,8 @@ const getTagColor = (tag) => {
   background-size: cover;
   background-position: center;
   border-radius: 4px;
+  max-height: 50px;
+  contain: strict;
 }
 
 .single-photo {
@@ -616,10 +631,14 @@ const getTagColor = (tag) => {
   background-size: cover;
   background-position: center;
   border-radius: 6px;
+  max-height: 70px;
+  contain: strict;
 }
 
 .video-preview {
   position: relative;
+  max-height: 70px;
+  overflow: hidden;
 }
 
 .video-thumbnail {
@@ -630,6 +649,8 @@ const getTagColor = (tag) => {
   display: flex;
   align-items: center;
   justify-content: center;
+  max-height: 70px;
+  contain: strict;
 }
 
 .card-description {
@@ -637,6 +658,10 @@ const getTagColor = (tag) => {
   color: #777;
   line-height: 1.6;
   margin: 6px 0;
+  overflow: hidden;
+  display: -webkit-box;
+  -webkit-line-clamp: 3;
+  -webkit-box-orient: vertical;
 }
 
 .card-tags {
@@ -644,6 +669,8 @@ const getTagColor = (tag) => {
   flex-wrap: wrap;
   gap: 3px;
   margin-top: 6px;
+  overflow: hidden;
+  max-height: 20px;
 }
 
 .node-content.right .card-tags {
@@ -665,6 +692,7 @@ const getTagColor = (tag) => {
 .card-footer {
   padding-top: 6px;
   border-top: 1px solid #f5f5f5;
+  overflow: hidden;
 }
 
 .view-detail {

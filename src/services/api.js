@@ -141,10 +141,10 @@ export async function uploadFile(file, date) {
     const result = await response.json()
     
     if (!response.ok) {
-      throw new Error(result.error || '上传失败')
+      throw new Error(result.message || result.error || '上传失败')
     }
     
-    return result
+    return result.data
   } catch (error) {
     console.error('Upload Error:', error)
     throw error
@@ -175,10 +175,10 @@ export async function uploadMultipleFiles(files, date) {
     const result = await response.json()
     
     if (!response.ok) {
-      throw new Error(result.error || '上传失败')
+      throw new Error(result.message || result.error || '上传失败')
     }
     
-    return result
+    return result.data
   } catch (error) {
     console.error('Upload Multiple Error:', error)
     throw error

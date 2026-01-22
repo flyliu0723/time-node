@@ -216,6 +216,7 @@ onUnmounted(() => {
   user-select: none;
   overflow: hidden;
   touch-action: none;
+  contain: layout paint;
 }
 
 .timeline-container:active,
@@ -286,6 +287,8 @@ onUnmounted(() => {
   height: 100%;
   transform-origin: center center;
   contain: layout style;
+  margin: 20px 0;
+  box-sizing: border-box;
 }
 
 .timeline-track {

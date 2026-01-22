@@ -109,6 +109,11 @@ export function updateRecord(id, updates) {
     values.push(JSON.stringify(updates.photos))
   }
   
+  if (updates.videos !== undefined) {
+    fields.push('videos = ?')
+    values.push(JSON.stringify(updates.videos))
+  }
+  
   if (fields.length === 0) return false
   
   fields.push('updated_at = ?')
