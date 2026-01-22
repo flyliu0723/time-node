@@ -197,6 +197,9 @@ const isValid = computed(() => {
   const hasMedia = form.type === 'text' || 
     (form.type === 'photo' && form.photos.length > 0) ||
     (form.type === 'video' && form.videos.length > 0)
+  console.log('hasBasicInfo:', hasBasicInfo)
+  console.log('hasMedia:', hasMedia)
+  console.log('hasMedia:', form)
   return hasBasicInfo && hasMedia
 })
 

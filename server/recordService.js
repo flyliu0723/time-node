@@ -37,8 +37,6 @@ export function getRecordById(id) {
     videos: result.videos ? JSON.parse(result.videos) : []
   }
 }
-  }
-}
 
 /**
  * 创建记录

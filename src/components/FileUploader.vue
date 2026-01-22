@@ -152,8 +152,12 @@ const handleDrop = (e) => {
 
 const addFiles = async (newFiles) => {
   const remainingSlots = props.maxFiles - files.value.length
+  const filesToUpload = Math.min(newFiles.length, remainingSlots)
   
-  for (let i = 0; i < Math.min(newFiles.length, remainingSlots); i++) {
+  // 设置正在上传的文件数量
+  uploadingCount.value = filesToUpload
+  
+  for (let i = 0; i < filesToUpload; i++) {
     const file = newFiles[i]
     
     // 创建预览
@@ -178,13 +182,11 @@ const addFiles = async (newFiles) => {
     files.value.push(fileItem)
     
     // 开始上传
-    await uploadFile(fileItem)
+    uploadFile(fileItem)
   }
-  
-  emit('update:files', files.value.map(f => f.path).filter(p => p))
 }
 
-const uploadFile = async (fileItem) => {
+const uploadFile = (fileItem) => {
   try {
     const formData = new FormData()
     formData.append('file', fileItem.file)
@@ -222,15 +224,21 @@ const uploadFile = async (fileItem) => {
   } catch (error) {
     fileItem.uploading = false
     fileItem.error = error.message
-    uploadingCount.value--
     uploadError.value = '部分文件上传失败'
+    checkUploadComplete()
   }
 }
 
 const checkUploadComplete = () => {
-  uploadingCount.value--
+  if (uploadingCount.value > 0) {
+    uploadingCount.value--
+  }
+  
   if (uploadingCount.value === 0) {
-    emit('upload-complete', files.value.map(f => f.path).filter(p => p))
+    const uploadedPaths = files.value.map(f => f.path).filter(p => p)
+    console.log('checkUploadComplete, uploadedPaths:', uploadedPaths)
+    emit('update:files', uploadedPaths)
+    emit('upload-complete', uploadedPaths)
   }
 }
 
