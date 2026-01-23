@@ -9,60 +9,65 @@
             </svg>
           </button>
           
-          <div class="modal-header">
-            <span class="modal-type" :class="record.type">
-              {{ typeLabel }}
-            </span>
-            <h2 class="modal-title">{{ record.title }}</h2>
-            <p class="modal-date">{{ formattedDate }}</p>
-          </div>
-          
-          <div class="modal-content">
-            <div v-if="record.type === 'photo'" class="photo-gallery">
-              <div 
-                v-for="(photo, index) in record.photos" 
-                :key="index"
-                class="gallery-item"
-                :class="{ active: activePhoto === index }"
-                @click="activePhoto = index"
-              >
-                <img :src="photo" :alt="`Photo ${index + 1}`" />
+          <div class="modal-body">
+            <!-- 左侧：标题、内容、标签 -->
+            <div class="left-panel">
+              <div class="modal-header">
+                <span class="modal-type" :class="record.type">
+                  {{ typeLabel }}
+                </span>
+                <h2 class="modal-title">{{ record.title }}</h2>
+                <p class="modal-date">{{ formattedDate }}</p>
+              </div>
+              
+              <div class="left-content">
+                <div v-if="record.description" class="description-section">
+                  <p>{{ record.description }}</p>
+                </div>
+                
+                <div v-if="record.tags?.length" class="tags-section">
+                  <div class="tags-list">
+                    <span 
+                      v-for="tag in record.tags" 
+                      :key="tag" 
+                      class="tag-item"
+                    >#{{ tag }}</span>
+                  </div>
+                </div>
+                
+                <div v-if="record.location" class="location-section">
+                  <svg viewBox="0 0 24 24" width="16" height="16">
+                    <path fill="currentColor" d="M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7zm0 9.5c-1.38 0-2.5-1.12-2.5-2.5s1.12-2.5 2.5-2.5 2.5 1.12 2.5 2.5-1.12 2.5-2.5 2.5z"/>
+                  </svg>
+                  <span>{{ record.location }}</span>
+                </div>
               </div>
             </div>
             
-            <div v-else-if="record.type === 'video'" class="video-container">
-              <video 
-                v-if="record.videos?.length" 
-                :src="record.videos[0]" 
-                controls
-                autoplay
-              ></video>
-              <div v-else class="video-placeholder">
-                <svg viewBox="0 0 24 24" width="64" height="64">
-                  <path fill="currentColor" d="M18 4l2 4h-3l-2-4h-2l2 4h-3l-2-4H8l2 4H7L5 4H4c-1.1 0-1.99.9-1.99 2L2 18c0 1.1.9 2 2 2h16c1.1 0 2-.9 2-2V4h-4z"/>
-                </svg>
+            <!-- 右侧：照片/视频从上往下排 -->
+            <div class="right-panel">
+              <div v-if="record.type === 'photo'" class="photo-list">
+                <div 
+                  v-for="(photo, index) in record.photos" 
+                  :key="index"
+                  class="photo-item"
+                >
+                  <img :src="photo" :alt="`Photo ${index + 1}`" />
+                </div>
               </div>
-            </div>
-            
-            <div v-if="record.description" class="description-section">
-              <h3>记录详情</h3>
-              <p>{{ record.description }}</p>
-            </div>
-            
-            <div v-if="record.tags?.length" class="tags-section">
-              <h3>标签</h3>
-              <div class="tags-list">
-                <span 
-                  v-for="tag in record.tags" 
-                  :key="tag" 
-                  class="tag-item"
-                >#{{ tag }}</span>
+              
+              <div v-else-if="record.type === 'video'" class="video-list">
+                <video 
+                  v-if="record.videos?.length" 
+                  :src="record.videos[0]" 
+                  controls
+                ></video>
+                <div v-else class="video-placeholder">
+                  <svg viewBox="0 0 24 24" width="48" height="48">
+                    <path fill="currentColor" d="M18 4l2 4h-3l-2-4h-2l2 4h-3l-2-4H8l2 4H7L5 4H4c-1.1 0-1.99.9-1.99 2L2 18c0 1.1.9 2 2 2h16c1.1 0 2-.9 2-2V4h-4z"/>
+                  </svg>
+                </div>
               </div>
-            </div>
-            
-            <div v-if="record.location" class="location-section">
-              <h3>地点</h3>
-              <p>{{ record.location }}</p>
             </div>
           </div>
         </div>
@@ -72,21 +77,9 @@
 </template>
 
 <script setup>
-/**
- * @fileOverview DetailModal.vue - 记录详情弹窗组件
- * 
- * 功能描述：
- * 1. 以弹窗形式展示记录详细信息
- * 2. 支持照片画廊（可切换）、视频播放
- * 3. 显示描述、标签、地点等完整信息
- * 4. 使用 Teleport 渲染到 body 下
- * 5. 带入场/退场动画效果
- */
-
-import { ref, computed, watch } from 'vue'
+import { computed, watch } from 'vue'
 
 const props = defineProps({
-  /** 要展示的记录数据 */
   record: {
     type: Object,
     required: true
@@ -94,8 +87,6 @@ const props = defineProps({
 })
 
 const emit = defineEmits(['close'])
-
-const activePhoto = ref(0)
 
 const typeLabel = computed(() => {
   const labels = {
@@ -117,7 +108,7 @@ const formattedDate = computed(() => {
 })
 
 watch(() => props.record, () => {
-  activePhoto.value = 0
+  
 })
 </script>
 
@@ -128,163 +119,131 @@ watch(() => props.record, () => {
   left: 0;
   width: 100%;
   height: 100%;
-  background: rgba(0, 0, 0, 0.5);
+  background: rgba(0, 0, 0, 0.6);
   display: flex;
   align-items: center;
   justify-content: center;
   z-index: 1000;
-  backdrop-filter: blur(5px);
+  backdrop-filter: blur(8px);
+  padding: 40px;
 }
 
 .detail-modal {
   background: white;
-  border-radius: 16px;
+  border-radius: 20px;
   width: 90%;
-  max-width: 800px;
-  max-height: 90vh;
-  overflow-y: auto;
+  max-width: 1100px;
+  max-height: calc(100vh - 80px);
+  min-height: 400px;
+  overflow: hidden;
   position: relative;
-  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+  box-shadow: 0 25px 80px rgba(0, 0, 0, 0.35);
+  display: flex;
+  flex-direction: column;
 }
 
 .close-btn {
   position: absolute;
-  top: 16px;
-  right: 16px;
-  width: 40px;
-  height: 40px;
+  top: 20px;
+  right: 20px;
+  width: 44px;
+  height: 44px;
   border: none;
-  background: rgba(0, 0, 0, 0.1);
+  background: rgba(0, 0, 0, 0.08);
   border-radius: 50%;
   cursor: pointer;
   display: flex;
   align-items: center;
   justify-content: center;
   transition: all 0.3s ease;
-  z-index: 10;
+  z-index: 20;
+  color: #666;
 }
 
 .close-btn:hover {
-  background: rgba(0, 0, 0, 0.2);
+  background: rgba(0, 0, 0, 0.15);
   transform: rotate(90deg);
 }
 
+.modal-body {
+  display: flex;
+  flex: 1;
+  overflow: hidden;
+  min-height: 0;
+}
+
+.left-panel {
+  flex: 0 0 380px;
+  padding: 32px;
+  display: flex;
+  flex-direction: column;
+  border-right: 1px solid #f0f0f0;
+  overflow-y: auto;
+  max-height: 100%;
+}
+
 .modal-header {
-  padding: 32px 32px 16px;
-  border-bottom: 1px solid #f0f0f0;
+  margin-bottom: 24px;
 }
 
 .modal-type {
   display: inline-block;
-  padding: 4px 12px;
-  border-radius: 12px;
+  padding: 5px 14px;
+  border-radius: 14px;
   font-size: 12px;
-  font-weight: 500;
-  margin-bottom: 12px;
+  font-weight: 600;
+  margin-bottom: 16px;
+  letter-spacing: 0.5px;
 }
 
 .modal-type.photo {
-  background: rgba(102, 126, 234, 0.1);
+  background: rgba(102, 126, 234, 0.12);
   color: #667eea;
 }
 
 .modal-type.video {
-  background: rgba(118, 75, 162, 0.1);
+  background: rgba(118, 75, 162, 0.12);
   color: #764ba2;
 }
 
 .modal-type.text {
-  background: rgba(240, 147, 43, 0.1);
+  background: rgba(240, 147, 43, 0.12);
   color: #f0932b;
 }
 
 .modal-title {
-  font-size: 28px;
+  font-size: 26px;
   font-weight: 600;
-  color: #333;
-  margin-bottom: 8px;
+  color: #222;
+  margin: 0 0 10px 0;
+  line-height: 1.3;
 }
 
 .modal-date {
   font-size: 14px;
-  color: #888;
+  color: #999;
+  margin: 0;
 }
 
-.modal-content {
-  padding: 24px 32px 32px;
+.left-content {
+  flex: 1;
+  overflow-y: auto;
+  min-height: 0;
 }
 
-.photo-gallery {
-  display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
-  gap: 12px;
+.description-section {
   margin-bottom: 24px;
-}
-
-.gallery-item {
-  aspect-ratio: 1;
-  border-radius: 8px;
-  overflow: hidden;
-  cursor: pointer;
-  transition: all 0.3s ease;
-  border: 3px solid transparent;
-}
-
-.gallery-item:hover {
-  transform: scale(1.05);
-}
-
-.gallery-item.active {
-  border-color: #667eea;
-}
-
-.gallery-item img {
-  width: 100%;
-  height: 100%;
-  object-fit: cover;
-}
-
-.video-container {
-  margin-bottom: 24px;
-}
-
-.video-container video {
-  width: 100%;
-  border-radius: 12px;
-}
-
-.video-placeholder {
-  width: 100%;
-  height: 300px;
-  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-  border-radius: 12px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  color: white;
-}
-
-.description-section,
-.tags-section,
-.location-section {
-  margin-bottom: 24px;
-}
-
-.description-section h3,
-.tags-section h3,
-.location-section h3 {
-  font-size: 14px;
-  font-weight: 600;
-  color: #666;
-  margin-bottom: 8px;
-  text-transform: uppercase;
-  letter-spacing: 1px;
 }
 
 .description-section p {
   font-size: 15px;
-  line-height: 1.8;
-  color: #333;
+  line-height: 1.85;
+  color: #444;
+  margin: 0;
+}
+
+.tags-section {
+  margin-bottom: 24px;
 }
 
 .tags-list {
@@ -298,7 +257,7 @@ watch(() => props.record, () => {
   color: #667eea;
   background: rgba(102, 126, 234, 0.1);
   padding: 6px 14px;
-  border-radius: 16px;
+  border-radius: 18px;
   transition: all 0.3s ease;
 }
 
@@ -306,14 +265,72 @@ watch(() => props.record, () => {
   background: rgba(102, 126, 234, 0.2);
 }
 
-.location-section p {
-  font-size: 14px;
+.location-section {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 12px 16px;
+  background: #f8f9fa;
+  border-radius: 12px;
   color: #666;
+  font-size: 14px;
+}
+
+.location-section svg {
+  flex-shrink: 0;
+  color: #999;
+}
+
+.right-panel {
+  flex: 1;
+  overflow-y: auto;
+  min-height: 0;
+  background: #f8f8f8;
+}
+
+.photo-list {
+  padding: 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.photo-item {
+  border-radius: 12px;
+  overflow: hidden;
+  background: white;
+  box-shadow: 0 2px 12px rgba(0, 0, 0, 0.06);
+}
+
+.photo-item img {
+  width: 100%;
+  display: block;
+}
+
+.video-list {
+  padding: 16px;
+}
+
+.video-list video {
+  width: 100%;
+  border-radius: 12px;
+  display: block;
+}
+
+.video-placeholder {
+  width: 100%;
+  height: 300px;
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  border-radius: 12px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: white;
 }
 
 .modal-enter-active,
 .modal-leave-active {
-  transition: all 0.3s ease;
+  transition: all 0.35s ease;
 }
 
 .modal-enter-from,
@@ -323,12 +340,12 @@ watch(() => props.record, () => {
 
 .modal-enter-from .detail-modal,
 .modal-leave-to .detail-modal {
-  transform: scale(0.9) translateY(20px);
+  transform: scale(0.95);
   opacity: 0;
 }
 
 .modal-enter-active .detail-modal,
 .modal-leave-active .detail-modal {
-  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  transition: all 0.35s cubic-bezier(0.4, 0, 0.2, 1);
 }
 </style>

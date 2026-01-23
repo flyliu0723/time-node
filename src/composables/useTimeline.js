@@ -40,16 +40,16 @@ export function useTimeline(options = {}) {
     scrollTo,
     scrollBy,
     stopDecay,
-    setBounds,
-    updateBounds
-  } = useScroll({
-    minScroll: -store.records.length * nodeGap + 500,
-    maxScroll: 500
-  })
+    setBounds
+  } = useScroll()
 
   watch(() => store.records.length, (newCount) => {
-    updateBounds(newCount, nodeGap)
-  })
+    if (newCount > 0) {
+      const minScroll = -(newCount - 1) * nodeGap + 300
+      const maxScroll = 300
+      setBounds(minScroll, maxScroll)
+    }
+  }, { immediate: true })
 
   const {
     zoomLevel,
@@ -87,6 +87,41 @@ export function useTimeline(options = {}) {
     })
   })
 
+  const todayNode = computed(() => {
+    if (store.records.length === 0) return null
+    
+    const today = new Date()
+    const firstRecord = store.records[0]
+    const firstDate = new Date(firstRecord.date)
+    
+    const todayTime = today.getTime()
+    const firstTime = firstDate.getTime()
+    
+    if (todayTime < firstTime) {
+      return null
+    }
+    
+    const daysDiff = (todayTime - firstTime) / (1000 * 60 * 60 * 24)
+    const position = daysDiff * nodeGap + 150
+    
+    console.log('[TodayNode] position:', position, 'daysDiff:', daysDiff.toFixed(1))
+    
+    return {
+      id: 'today',
+      position,
+      date: today.toISOString()
+    }
+  })
+
+  watch(todayNode, (node) => {
+    if (node) {
+      const maxScroll = Math.max(300, node.position + 500)
+      const minScroll = Math.min(-store.records.length * nodeGap + 300, -node.position + 300)
+      console.log('[Bounds] minScroll:', minScroll, 'maxScroll:', maxScroll)
+      setBounds(minScroll, maxScroll)
+    }
+  })
+
   const isAtNow = computed(() => {
     if (store.records.length === 0) return true
 
@@ -116,24 +151,27 @@ export function useTimeline(options = {}) {
   const getNodePosition = (index) => index * nodeGap + 150
 
   const scrollToNow = () => {
-    if (store.records.length === 0) return
+    if (!todayNode.value) {
+      if (store.records.length === 0) return
+      const now = new Date()
+      const today = new Date(now.getFullYear(), now.getMonth(), now.getDate())
 
-    const now = new Date()
-    const today = new Date(now.getFullYear(), now.getMonth(), now.getDate())
+      let targetIndex = 0
+      let minDiff = Infinity
 
-    let targetIndex = 0
-    let minDiff = Infinity
+      store.records.forEach((record, index) => {
+        const recordDate = new Date(record.date)
+        const diff = Math.abs(today - recordDate)
+        if (diff < minDiff) {
+          minDiff = diff
+          targetIndex = index
+        }
+      })
 
-    store.records.forEach((record, index) => {
-      const recordDate = new Date(record.date)
-      const diff = Math.abs(today - recordDate)
-      if (diff < minDiff) {
-        minDiff = diff
-        targetIndex = index
-      }
-    })
-
-    scrollToIndex(targetIndex)
+      scrollToIndex(targetIndex)
+    } else {
+      scrollTo(todayNode.value.position)
+    }
   }
 
   const handleJump = (record) => {
@@ -218,6 +256,7 @@ export function useTimeline(options = {}) {
     virtualItems,
     visibleBubbles,
     visibleWindow,
+    todayNode,
     
     isAtNow,
     transformStyle,

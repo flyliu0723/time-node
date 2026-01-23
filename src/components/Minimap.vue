@@ -200,7 +200,7 @@ const jumpTo = (record) => {
   right: 0;
   background: rgba(255, 255, 255, 0.95);
   border-top: 1px solid #eee;
-  padding: 12px 30px 16px;
+  padding: 6px 30px 6px;
   z-index: 100;
   backdrop-filter: blur(10px);
 }

@@ -39,8 +39,9 @@ export function useScroll(options = {}) {
     const now = Date.now()
     const delta = now - lastTime
     
-    if (delta > 0) {
-      velocity.value = (currentScroll - lastScrollX) * (1000 / delta)
+    if (delta > 0 && delta < 100) {
+      const rawVelocity = (currentScroll - lastScrollX) * (1000 / delta)
+      velocity.value = velocity.value * 0.5 + rawVelocity * 0.5
     }
     
     lastScrollX = currentScroll
@@ -50,26 +51,38 @@ export function useScroll(options = {}) {
   const decayVelocity = () => {
     if (Math.abs(velocity.value) < 0.1) {
       velocity.value = 0
+      if (velocityRafId) {
+        cancelAnimationFrame(velocityRafId)
+        velocityRafId = null
+      }
       return
     }
     
-    velocity.value *= 0.9
-    const newScroll = scrollX.value + velocity.value
+    velocity.value *= 0.88
+    let newScroll = scrollX.value + velocity.value
     
-    if (newScroll <= minScroll.value || newScroll >= maxScroll.value) {
+    if (newScroll <= minScroll.value) {
+      newScroll = minScroll.value
       velocity.value = 0
-      return
+    } else if (newScroll >= maxScroll.value) {
+      newScroll = maxScroll.value
+      velocity.value = 0
     }
     
     scrollX.value = newScroll
-    velocityRafId = requestAnimationFrame(decayVelocity)
+    
+    if (velocity.value !== 0) {
+      velocityRafId = requestAnimationFrame(decayVelocity)
+    }
   }
 
   const startDrag = (clientX) => {
     if (velocityRafId) {
       cancelAnimationFrame(velocityRafId)
+      velocityRafId = null
     }
     
+    velocity.value = 0
     isDragging.value = true
     dragStartX.value = clientX
     dragStartScroll.value = scrollX.value
@@ -96,11 +109,11 @@ export function useScroll(options = {}) {
       return
     }
     
-    const scrollDelta = deltaY > 0 ? 60 : -60
+    const scrollDelta = deltaY > 0 ? 40 : -40
     const newScroll = scrollX.value + scrollDelta / zoomLevel
     scrollX.value = Math.max(minScroll.value, Math.min(maxScroll.value, newScroll))
     
-    velocity.value = -deltaY / zoomLevel
+    velocity.value = 0
   }
 
   const scrollTo = (position) => {

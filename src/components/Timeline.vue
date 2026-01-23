@@ -65,13 +65,25 @@
           />
         </div>
 
-        <EmptyStateBubble
+        <div 
+          v-if="todayNode"
+          class="today-node-wrapper"
+          :style="{ left: `${todayNode.position}px` }"
+          :key="todayNode.id"
+        >
+          <div class="today-marker">
+            <span class="today-label">今日</span>
+            <div class="today-dot"></div>
+          </div>
+        </div>
+
+        <!-- <EmptyStateBubble
           v-for="bubble in visibleBubbles"
           :key="bubble.date"
           :date="bubble.date"
           :index="bubble.index"
           :gap="260"
-        />
+        /> -->
       </div>
     </div>
     
@@ -106,7 +118,7 @@
       <svg viewBox="0 0 24 24" width="22" height="22">
         <path fill="currentColor" d="M19 13h-6v6h-2v-6H5v-2h6V5h2v6h6v2z"/>
       </svg>
-      <span class="add-btn-label">记录此刻</span>
+      <span class="add-btn-label">添加记录</span>
     </button>
 
     <button 
@@ -115,9 +127,10 @@
       :class="{ visible: !isAtNow }"
       title="回到现在"
     >
-      <svg viewBox="0 0 24 24" width="18" height="18">
+      <svg viewBox="0 0 24 24" width="20" height="20">
         <path fill="currentColor" d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-2 15l-5-5 1.41-1.41L10 14.17l7.59-7.59L19 8l-9 9z"/>
       </svg>
+      <span class="back-now-label">回到今天</span>
     </button>
   </div>
 </template>
@@ -146,30 +159,28 @@ const emit = defineEmits(['select', 'add'])
 const containerRef = ref(null)
 const timelineWrapper = ref(null)
 
-const {
-  records,
-  selectedRecord,
-  scrollX,
-  velocity,
-  isDragging,
-  zoomLevel,
-  zoomLabel,
-  virtualItems,
-  visibleBubbles,
-  isAtNow,
-  transformStyle,
-  zoomIn,
-  zoomOut,
-  resetZoom,
-  startDrag,
-  onDrag,
-  stopDrag,
-  handleWheel: scrollHandleWheel,
-  scrollToNow,
-  handleJump,
-  handleMinimapScroll,
-  selectRecord
-} = useTimeline()
+  const {
+    records,
+    selectedRecord,
+    scrollX,
+    velocity,
+    isDragging,
+    zoomLevel,
+    zoomLabel,
+    virtualItems,
+    visibleBubbles,
+    isAtNow,
+    transformStyle,
+    todayNode,
+    scrollToNow,
+    handleJump,
+    handleMinimapScroll,
+    selectRecord,
+    startDrag,
+    onDrag,
+    stopDrag,
+    handleWheel: scrollHandleWheel
+  } = useTimeline()
 
 const handleNodeClick = (record) => {
   selectRecord(record)
@@ -183,7 +194,9 @@ const handleContainerMouseDown = (e) => {
 }
 
 const handleContainerMouseUp = () => {
-  stopDrag()
+  if (isDragging.value) {
+    stopDrag()
+  }
 }
 
 const handleContainerWheel = (e) => {
@@ -227,31 +240,36 @@ onUnmounted(() => {
 .zoom-controls {
   position: fixed;
   bottom: 100px;
-  right: 30px;
+  left: 30px;
   display: flex;
   flex-direction: column;
   align-items: center;
-  gap: 10px;
+  gap: 6px;
   z-index: 100;
   background: rgba(255, 255, 255, 0.9);
-  padding: 15px;
-  border-radius: 12px;
+  padding: 10px;
+  border-radius: 10px;
   box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08);
   backdrop-filter: blur(10px);
 }
 
 .zoom-btn {
-  width: 40px;
-  height: 40px;
+  width: 32px;
+  height: 32px;
   border: none;
   background: #f8f8f8;
-  border-radius: 10px;
+  border-radius: 8px;
   cursor: pointer;
   display: flex;
   align-items: center;
   justify-content: center;
   transition: all 0.2s ease;
   color: #666;
+}
+
+.zoom-btn svg {
+  width: 16px;
+  height: 16px;
 }
 
 .zoom-btn:hover {
@@ -287,7 +305,7 @@ onUnmounted(() => {
   height: 100%;
   transform-origin: center center;
   contain: layout style;
-  margin: 20px 0;
+  margin: -40px 0;
   box-sizing: border-box;
 }
 
@@ -332,6 +350,41 @@ onUnmounted(() => {
 .timeline-node-wrapper:hover {
   z-index: 20;
   transform: translateY(-50%) scale(1.02);
+}
+
+.today-node-wrapper {
+  position: absolute;
+  top: 50%;
+  transform: translateY(-50%);
+  z-index: 5;
+}
+
+.today-marker {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  position: relative;
+}
+
+.today-label {
+  font-size: 11px;
+  font-weight: 600;
+  color: #667eea;
+  background: white;
+  padding: 4px 10px;
+  border-radius: 12px;
+  box-shadow: 0 2px 8px rgba(102, 126, 234, 0.25);
+  margin-bottom: 8px;
+  white-space: nowrap;
+  border: 2px solid #667eea;
+}
+
+.today-dot {
+  width: 10px;
+  height: 10px;
+  background: #667eea;
+  border-radius: 50%;
+  box-shadow: 0 0 0 4px rgba(102, 126, 234, 0.2);
 }
 
 .level-legend {
@@ -379,8 +432,8 @@ onUnmounted(() => {
 
 .add-btn {
   position: fixed;
-  bottom: 30px;
-  left: 30px;
+  bottom: 115px;
+  right: 30px;
   display: flex;
   align-items: center;
   gap: 8px;
@@ -424,8 +477,8 @@ onUnmounted(() => {
 
 .back-now-btn {
   position: fixed;
-  bottom: 30px;
-  left: 180px;
+  bottom: 160px;
+  right: 30px;
   width: 44px;
   height: 44px;
   border-radius: 50%;
