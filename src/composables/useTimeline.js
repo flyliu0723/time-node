@@ -35,20 +35,53 @@ export function useTimeline(options = {}) {
     isDragging,
     startDrag,
     onDrag,
-    stopDrag,
+    stopDrag: originalStopDrag,
     handleWheel,
     scrollTo,
     scrollBy,
     stopDecay,
-    setBounds
+    setBounds,
+    clampScroll
   } = useScroll()
 
-  watch(() => store.records.length, (newCount) => {
-    if (newCount > 0) {
-      const minScroll = -(newCount - 1) * nodeGap + 300
-      const maxScroll = 300
-      setBounds(minScroll, maxScroll)
+  const stopDrag = () => {
+    originalStopDrag()
+  }
+
+  const updateScrollBounds = () => {
+    if (store.records.length === 0) {
+      setBounds(-300, 300)
+      return
     }
+
+    const firstRecord = store.records[0]
+    const lastRecord = store.records[store.records.length - 1]
+    const firstDate = new Date(firstRecord.date)
+    const lastDate = new Date(lastRecord.date)
+    const today = new Date()
+    
+    const todayTime = today.getTime()
+    const firstTime = firstDate.getTime()
+    const lastTime = lastDate.getTime()
+
+    const daysDiffFirst = (todayTime - firstTime) / (1000 * 60 * 60 * 24)
+    const daysDiffLast = (todayTime - lastTime) / (1000 * 60 * 60 * 24)
+    
+    const firstPosition = daysDiffFirst * nodeGap + 150
+    const lastPosition = daysDiffLast * nodeGap + 150
+    
+    const bufferDays = 7
+    const bufferPixels = bufferDays * nodeGap
+    
+    const minScroll = -firstPosition - bufferPixels + 300
+    const maxScroll = Math.max(300, bufferPixels + 300)
+
+    console.log('[Bounds] minScroll:', minScroll, 'maxScroll:', maxScroll, 'firstPosition:', firstPosition, 'lastPosition:', lastPosition)
+    setBounds(minScroll, maxScroll)
+  }
+
+  watch(() => store.records.length, () => {
+    updateScrollBounds()
   }, { immediate: true })
 
   const {
@@ -71,7 +104,19 @@ export function useTimeline(options = {}) {
     scrollToIndex
   } = useVirtualList(computed(() => store.sortedRecords), {
     nodeGap,
-    buffer: 3
+    buffer: 3,
+    maxPosition: computed(() => {
+      const today = new Date()
+      const firstRecord = store.records[0]
+      if (!firstRecord) return 0
+      
+      const firstDate = new Date(firstRecord.date)
+      const todayTime = today.getTime()
+      const firstTime = firstDate.getTime()
+      const daysDiff = (todayTime - firstTime) / (1000 * 60 * 60 * 24)
+      
+      return daysDiff * nodeGap + 150 + 7 * nodeGap
+    })
   })
 
   const {
@@ -97,28 +142,13 @@ export function useTimeline(options = {}) {
     const todayTime = today.getTime()
     const firstTime = firstDate.getTime()
     
-    if (todayTime < firstTime) {
-      return null
-    }
-    
     const daysDiff = (todayTime - firstTime) / (1000 * 60 * 60 * 24)
     const position = daysDiff * nodeGap + 150
-    
-    console.log('[TodayNode] position:', position, 'daysDiff:', daysDiff.toFixed(1))
     
     return {
       id: 'today',
       position,
       date: today.toISOString()
-    }
-  })
-
-  watch(todayNode, (node) => {
-    if (node) {
-      const maxScroll = Math.max(300, node.position + 500)
-      const minScroll = Math.min(-store.records.length * nodeGap + 300, -node.position + 300)
-      console.log('[Bounds] minScroll:', minScroll, 'maxScroll:', maxScroll)
-      setBounds(minScroll, maxScroll)
     }
   })
 
@@ -151,27 +181,24 @@ export function useTimeline(options = {}) {
   const getNodePosition = (index) => index * nodeGap + 150
 
   const scrollToNow = () => {
-    if (!todayNode.value) {
-      if (store.records.length === 0) return
-      const now = new Date()
-      const today = new Date(now.getFullYear(), now.getMonth(), now.getDate())
+    if (store.records.length === 0) return
+    
+    const now = new Date()
+    const today = new Date(now.getFullYear(), now.getMonth(), now.getDate())
+    
+    let targetIndex = 0
+    let minDiff = Infinity
 
-      let targetIndex = 0
-      let minDiff = Infinity
+    store.records.forEach((record, index) => {
+      const recordDate = new Date(record.date)
+      const diff = Math.abs(today - recordDate)
+      if (diff < minDiff) {
+        minDiff = diff
+        targetIndex = index
+      }
+    })
 
-      store.records.forEach((record, index) => {
-        const recordDate = new Date(record.date)
-        const diff = Math.abs(today - recordDate)
-        if (diff < minDiff) {
-          minDiff = diff
-          targetIndex = index
-        }
-      })
-
-      scrollToIndex(targetIndex)
-    } else {
-      scrollTo(todayNode.value.position)
-    }
+    scrollToIndex(targetIndex)
   }
 
   const handleJump = (record) => {

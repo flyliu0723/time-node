@@ -30,9 +30,14 @@ export function useScroll(options = {}) {
 
   const minScroll = ref(-2000)
   const maxScroll = ref(2000)
+  const MAX_VELOCITY = 80
 
   const isAtBoundary = computed(() => {
     return scrollX.value <= minScroll.value || scrollX.value >= maxScroll.value
+  })
+
+  const isInEmptyZone = computed(() => {
+    return scrollX.value < minScroll.value || scrollX.value > maxScroll.value
   })
 
   const updateVelocity = (currentScroll) => {
@@ -59,14 +64,31 @@ export function useScroll(options = {}) {
     }
     
     velocity.value *= 0.88
+    
+    if (Math.abs(velocity.value) > MAX_VELOCITY) {
+      velocity.value = Math.sign(velocity.value) * MAX_VELOCITY
+    }
+    
     let newScroll = scrollX.value + velocity.value
     
     if (newScroll <= minScroll.value) {
-      newScroll = minScroll.value
-      velocity.value = 0
+      const overshoot = minScroll.value - newScroll
+      newScroll = minScroll.value - overshoot * 0.3
+      velocity.value *= -0.3
+      
+      if (Math.abs(velocity.value) < 0.5) {
+        velocity.value = 0
+        scrollX.value = minScroll.value
+      }
     } else if (newScroll >= maxScroll.value) {
-      newScroll = maxScroll.value
-      velocity.value = 0
+      const overshoot = newScroll - maxScroll.value
+      newScroll = maxScroll.value + overshoot * 0.3
+      velocity.value *= -0.3
+      
+      if (Math.abs(velocity.value) < 0.5) {
+        velocity.value = 0
+        scrollX.value = maxScroll.value
+      }
     }
     
     scrollX.value = newScroll
@@ -152,11 +174,37 @@ export function useScroll(options = {}) {
     }
   }
 
+  const snapToContent = () => {
+    if (isInEmptyZone.value) {
+      const targetScroll = scrollX.value < minScroll.value ? minScroll.value : maxScroll.value
+      const startScroll = scrollX.value
+      const duration = 300
+      const startTime = performance.now()
+      
+      const animate = (currentTime) => {
+        const elapsed = currentTime - startTime
+        const progress = Math.min(elapsed / duration, 1)
+        const eased = 1 - Math.pow(1 - progress, 3)
+        
+        scrollX.value = startScroll + (targetScroll - startScroll) * eased
+        
+        if (progress < 1) {
+          requestAnimationFrame(animate)
+        } else {
+          velocity.value = 0
+        }
+      }
+      
+      requestAnimationFrame(animate)
+    }
+  }
+
   return {
     scrollX,
     velocity,
     isDragging,
     isAtBoundary,
+    isInEmptyZone,
     minScroll,
     maxScroll,
     startDrag,
@@ -169,6 +217,7 @@ export function useScroll(options = {}) {
     stopDecay,
     setBounds,
     updateBounds,
-    updateVelocity
+    updateVelocity,
+    snapToContent
   }
 }

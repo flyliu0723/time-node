@@ -20,7 +20,8 @@ export function useVirtualList(items, options = {}) {
   const {
     nodeGap = 260,
     buffer = 3,
-    containerWidth = typeof window !== 'undefined' ? window.innerWidth : 1920
+    containerWidth = typeof window !== 'undefined' ? window.innerWidth : 1920,
+    maxPosition = Infinity
   } = options
 
   const scrollX = ref(0)

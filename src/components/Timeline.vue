@@ -437,7 +437,7 @@ onUnmounted(() => {
   display: flex;
   align-items: center;
   gap: 8px;
-  padding: 8px 8px 8px 20px;
+  padding: 8px 8px 8px 8px;
   border: none;
   border-radius: 30px;
   background: linear-gradient(135deg, #7d8a9a 0%, #9a8c7c 100%);
@@ -459,6 +459,7 @@ onUnmounted(() => {
   opacity: 0;
   transform: translateX(-10px);
   transition: all 0.3s ease;
+  display: none;
 }
 
 .add-btn:hover {
@@ -469,6 +470,7 @@ onUnmounted(() => {
 .add-btn:hover .add-btn-label {
   opacity: 1;
   transform: translateX(0);
+  display: inline-block;
 }
 
 .add-btn:active {
@@ -479,16 +481,15 @@ onUnmounted(() => {
   position: fixed;
   bottom: 160px;
   right: 30px;
-  width: 44px;
-  height: 44px;
-  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 8px 8px 8px;
   border: none;
+  border-radius: 30px;
   background: white;
   color: #7d8a9a;
   cursor: pointer;
-  display: flex;
-  align-items: center;
-  justify-content: center;
   box-shadow: 0 2px 12px rgba(0, 0, 0, 0.08);
   transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
   z-index: 100;
@@ -503,10 +504,30 @@ onUnmounted(() => {
   pointer-events: auto;
 }
 
+.back-now-btn svg {
+  flex-shrink: 0;
+}
+
+.back-now-label {
+  font-size: 13px;
+  font-weight: 500;
+  white-space: nowrap;
+  opacity: 0;
+  transform: translateX(-10px);
+  transition: all 0.3s ease;
+  display: none;
+}
+
 .back-now-btn:hover {
-  transform: translateY(-2px) scale(1.05);
+  padding-right: 24px;
   box-shadow: 0 4px 20px rgba(125, 138, 154, 0.2);
-  color: #7d8a9a;
+  transform: translateY(-2px) scale(1.05);
+}
+
+.back-now-btn:hover .back-now-label {
+  opacity: 1;
+  transform: translateX(0);
+  display: inline-block;
 }
 
 .back-now-btn:active {

@@ -82,11 +82,25 @@
             <div class="form-row">
               <div class="form-group full">
                 <label>地点</label>
-                <input 
-                  v-model="form.location" 
-                  type="text" 
-                  placeholder="在哪里发生的"
-                />
+                <button 
+                  type="button"
+                  class="location-select-btn"
+                  @click="showLocationPicker = true"
+                >
+                  <svg v-if="!form.location" viewBox="0 0 24 24" width="20" height="20">
+                    <path fill="currentColor" d="M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7zm0 9.5c-1.38 0-2.5-1.12-2.5-2.5s1.12-2.5 2.5-2.5 2.5 1.12 2.5 2.5-1.12 2.5-2.5 2.5z"/>
+                  </svg>
+                  <span v-if="!form.location">点击选择位置</span>
+                  <span v-else class="location-text">{{ form.location.name }}</span>
+                  <button 
+                    v-if="form.location"
+                    type="button"
+                    class="location-remove-btn"
+                    @click.stop="handleLocationRemove"
+                  >
+                    ×
+                  </button>
+                </button>
               </div>
             </div>
             
@@ -155,6 +169,14 @@
         </div>
       </div>
     </Transition>
+    
+    <LocationPicker 
+      v-if="showLocationPicker"
+      :visible="showLocationPicker"
+      :initial-location="form.location"
+      @close="showLocationPicker = false"
+      @select="handleLocationSelect"
+    />
   </Teleport>
 </template>
 
@@ -172,12 +194,14 @@
 
 import { ref, computed, reactive, watch } from 'vue'
 import FileUploader from './FileUploader.vue'
+import LocationPicker from './LocationPicker.vue'
 
 const emit = defineEmits(['close', 'save'])
 
 const photoUploader = ref(null)
 const videoUploader = ref(null)
 const tagInput = ref('')
+const showLocationPicker = ref(false)
 
 /** 新建记录的表单数据 */
 const form = reactive({
@@ -186,7 +210,7 @@ const form = reactive({
   type: 'photo',
   level: 2,
   description: '',
-  location: '',
+  location: null,
   tags: [],
   photos: [],
   videos: []
@@ -223,6 +247,14 @@ const handleVideosUpdate = (paths) => {
   form.videos = paths
 }
 
+const handleLocationSelect = (location) => {
+  form.location = location
+}
+
+const handleLocationRemove = () => {
+  form.location = null
+}
+
 const handleSubmit = () => {
   if (!isValid.value) return
   
@@ -233,7 +265,7 @@ const handleSubmit = () => {
     type: form.type,
     level: form.level,
     description: form.description.trim(),
-    location: form.location.trim(),
+    location: form.location,
     tags: [...form.tags],
     photos: form.type === 'photo' ? form.photos : [],
     videos: form.type === 'video' ? form.videos : []
@@ -455,6 +487,59 @@ watch(() => form.type, (newType) => {
   background: transparent !important;
   padding: 4px !important;
   box-shadow: none !important;
+}
+
+.location-select-btn {
+  width: 100%;
+  padding: 10px 12px;
+  border: 1px solid #e0e0e0;
+  border-radius: 8px;
+  background: #fafafa;
+  cursor: pointer;
+  font-size: 14px;
+  transition: all 0.2s ease;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  color: #999;
+}
+
+.location-select-btn:hover {
+  border-color: #ccc;
+  background: #f5f5f5;
+}
+
+.location-select-btn svg {
+  flex-shrink: 0;
+}
+
+.location-text {
+  flex: 1;
+  text-align: left;
+  color: #333;
+  font-weight: 500;
+}
+
+.location-remove-btn {
+  width: 24px;
+  height: 24px;
+  border: none;
+  background: rgba(231, 76, 60, 0.1);
+  border-radius: 50%;
+  cursor: pointer;
+  color: #e74c3c;
+  font-size: 18px;
+  line-height: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.2s ease;
+  flex-shrink: 0;
+}
+
+.location-remove-btn:hover {
+  background: #e74c3c;
+  color: white;
 }
 
 .form-actions {
