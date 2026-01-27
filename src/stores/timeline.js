@@ -138,23 +138,39 @@ export const useTimelineStore = defineStore('timeline', () => {
           recordCount: t.record_count
         }
         
-        const timelineRecords = (result.data.records || []).map(r => ({
-          id: r.id,
-          timelineId: r.timeline_id,
-          title: r.title,
-          description: r.description,
-          date: r.date,
-          type: r.type,
-          level: r.level,
-          location: r.location,
-          tags: r.tags || [],
-          photos: (r.photos || []).map(p => '/uploads/image/' + p),
-          videos: (r.videos || []).map(v => '/uploads/video/' + v),
-          videoUrl: r.video_url ? '/uploads/video/' + r.video_url : null,
-          mediaPath: r.media_path,
-          createdAt: r.created_at,
-          updatedAt: r.updated_at
-        }))
+        const timelineRecords = (result.data.records || []).map(r => {
+          let location = null
+          if (r.location) {
+            try {
+              location = typeof r.location === 'string' ? JSON.parse(r.location) : r.location
+            } catch (e) {
+              location = {
+                lng: null,
+                lat: null,
+                name: r.location,
+                address: r.location
+              }
+            }
+          }
+          
+          return {
+            id: r.id,
+            timelineId: r.timeline_id,
+            title: r.title,
+            description: r.description,
+            date: r.date,
+            type: r.type,
+            level: r.level,
+            location: location,
+            tags: r.tags || [],
+            photos: (r.photos || []).map(p => '/uploads/image/' + p),
+            videos: (r.videos || []).map(v => '/uploads/video/' + v),
+            videoUrl: r.video_url ? '/uploads/video/' + r.video_url : null,
+            mediaPath: r.media_path,
+            createdAt: r.created_at,
+            updatedAt: r.updated_at
+          }
+        })
         
         // 更新时间轴列表
         const existingIndex = timelines.value.findIndex(t => t.id === timeline.id)
@@ -181,23 +197,39 @@ export const useTimelineStore = defineStore('timeline', () => {
     try {
       loading.value = true
       const result = await api.getRecords(timelineId)
-      records.value = (result.data || []).map(r => ({
-        id: r.id,
-        timelineId: r.timeline_id,
-        title: r.title,
-        description: r.description,
-        date: r.date,
-        type: r.type,
-        level: r.level,
-        location: r.location,
-        tags: r.tags || [],
-        photos: (r.photos || []).map(p => '/uploads/image/' + p),
-        videos: (r.videos || []).map(v => '/uploads/video/' + v),
-        videoUrl: r.video_url ? '/uploads/video/' + r.video_url : null,
-        mediaPath: r.media_path,
-        createdAt: r.created_at,
-        updatedAt: r.updated_at
-      }))
+      records.value = (result.data || []).map(r => {
+        let location = null
+        if (r.location) {
+          try {
+            location = typeof r.location === 'string' ? JSON.parse(r.location) : r.location
+          } catch (e) {
+            location = {
+              lng: null,
+              lat: null,
+              name: r.location,
+              address: r.location
+            }
+          }
+        }
+        
+        return {
+          id: r.id,
+          timelineId: r.timeline_id,
+          title: r.title,
+          description: r.description,
+          date: r.date,
+          type: r.type,
+          level: r.level,
+          location: location,
+          tags: r.tags || [],
+          photos: (r.photos || []).map(p => '/uploads/image/' + p),
+          videos: (r.videos || []).map(v => '/uploads/video/' + v),
+          videoUrl: r.video_url ? '/uploads/video/' + r.video_url : null,
+          mediaPath: r.media_path,
+          createdAt: r.created_at,
+          updatedAt: r.updated_at
+        }
+      })
     } catch (err) {
       error.value = err.message
       console.error('加载记录失败:', err)
@@ -311,10 +343,25 @@ export const useTimelineStore = defineStore('timeline', () => {
     try {
       loading.value = true
       error.value = null
+      
       const result = await api.createRecord(currentTimelineId.value, record)
       
       if (result.data) {
         const r = result.data
+        let location = null
+        if (r.location) {
+          try {
+            location = typeof r.location === 'string' ? JSON.parse(r.location) : r.location
+          } catch (e) {
+            location = {
+              lng: null,
+              lat: null,
+              name: r.location,
+              address: r.location
+            }
+          }
+        }
+        
         const mappedRecord = {
           id: r.id,
           timelineId: r.timeline_id,
@@ -323,7 +370,7 @@ export const useTimelineStore = defineStore('timeline', () => {
           date: r.date,
           type: r.type,
           level: r.level,
-          location: r.location,
+          location: location,
           tags: r.tags || [],
           photos: (r.photos || []).map(p => '/uploads/image/' + p),
           videos: (r.videos || []).map(v => '/uploads/video/' + v),
@@ -354,6 +401,20 @@ export const useTimelineStore = defineStore('timeline', () => {
       
       if (result.data) {
         const r = result.data
+        let location = null
+        if (r.location) {
+          try {
+            location = typeof r.location === 'string' ? JSON.parse(r.location) : r.location
+          } catch (e) {
+            location = {
+              lng: null,
+              lat: null,
+              name: r.location,
+              address: r.location
+            }
+          }
+        }
+        
         const mappedRecord = {
           id: r.id,
           timelineId: r.timeline_id,
@@ -362,7 +423,7 @@ export const useTimelineStore = defineStore('timeline', () => {
           date: r.date,
           type: r.type,
           level: r.level,
-          location: r.location,
+          location: location,
           tags: r.tags || [],
           photos: (r.photos || []).map(p => '/uploads/image/' + p),
           videos: (r.videos || []).map(v => '/uploads/video/' + v),

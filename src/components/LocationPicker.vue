@@ -51,6 +51,7 @@
 
 <script setup>
 import { ref, onMounted, onBeforeUnmount, nextTick } from 'vue'
+import AMapLoader from '@amap/amap-jsapi-loader'
 
 const props = defineProps({
   visible: Boolean,
@@ -71,61 +72,94 @@ let marker = null
 let geocoder = null
 let placeSearch = null
 
-const loadAMapScript = () => {
-  return new Promise((resolve, reject) => {
-    if (window.AMap) {
-      resolve()
-      return
-    }
-    
-    const script = document.createElement('script')
-    script.type = 'text/javascript'
-    script.src = `https://webapi.amap.com/maps?v=2.0&key=${import.meta.env.VITE_AMAP_KEY}&plugin=AMap.Geocoder,AMap.PlaceSearch,AMap.Geolocation`
-    script.onload = resolve
-    script.onerror = reject
-    document.head.appendChild(script)
-  })
-}
 
 const initMap = async () => {
   try {
-    await loadAMapScript()
+    console.log('开始初始化地图...')
     
-    if (!mapContainer.value) return
-    
-    map = new AMap.Map(mapContainer.value, {
-      zoom: 13,
-      center: [116.397428, 39.90923],
-      viewMode: '2D'
-    })
-    
-    geocoder = new AMap.Geocoder({
-      city: '全国'
-    })
-    
-    placeSearch = new AMap.PlaceSearch({
-      city: '全国',
-      pageSize: 10,
-      pageIndex: 1
-    })
-    
-    map.on('click', handleMapClick)
-    
-    if (props.initialLocation && props.initialLocation.lng && props.initialLocation.lat) {
-      map.setCenter([props.initialLocation.lng, props.initialLocation.lat])
-      updateSelectedLocation(props.initialLocation.lng, props.initialLocation.lat, props.initialLocation.name || '')
-    } else {
-      handleLocate()
+    if (!mapContainer.value) {
+      console.error('mapContainer 不存在')
+      return
     }
+    // 关键！设置安全密钥[1,5](@ref)
+    window._AMapSecurityConfig = {
+      securityJsCode: import.meta.env.VITE_AMAP_SECURITY_JS_CODE
+    };
+    console.log('mapContainer 存在，开始加载高德地图 API...')
+    console.log('API Key:', import.meta.env.VITE_AMAP_KEY)
+    
+    AMapLoader.load({
+      key: import.meta.env.VITE_AMAP_KEY,
+      version: '2.0',
+      plugins: ['AMap.Geocoder', 'AMap.PlaceSearch']
+    }).then((AMap) => {
+      console.log('高德地图 API 加载成功，开始初始化地图实例')
+      initMapInstance(AMap)
+    })
   } catch (error) {
     console.error('地图初始化失败:', error)
+    alert('地图初始化失败，请检查网络连接或刷新页面重试')
   }
+}
+
+const initMapInstance = (AMap) => {
+  console.log('开始初始化地图实例...')
+  console.log('mapContainer:', mapContainer.value)
+  
+  map = new AMap.Map(mapContainer.value, {
+    zoom: 13,
+    center: [116.397428, 39.90923],
+    viewMode: '2D'
+  })
+  
+  console.log('地图实例创建成功')
+  
+  geocoder = new AMap.Geocoder({
+    city: '全国',
+    radius: 1000
+  })
+  
+  console.log('Geocoder 创建成功')
+  
+  placeSearch = new AMap.PlaceSearch({
+    city: '全国',
+    pageSize: 10,
+    pageIndex: 1
+  })
+  
+  console.log('PlaceSearch 创建成功')
+  
+  map.on('click', handleMapClick)
+  console.log('地图点击事件已绑定')
+  
+  if (props.initialLocation && props.initialLocation.lng && props.initialLocation.lat) {
+    map.setCenter([props.initialLocation.lng, props.initialLocation.lat])
+    map.setZoom(15)
+    updateMarker(props.initialLocation.lng, props.initialLocation.lat)
+    updateSelectedLocation(props.initialLocation.lng, props.initialLocation.lat, props.initialLocation.name || '', geocoder)
+  } else {
+    setTimeout(() => {
+      handleLocate()
+    }, 500)
+  }
+  
+  console.log('地图初始化完成')
 }
 
 const handleMapClick = (e) => {
   const { lng, lat } = e.lnglat
   updateMarker(lng, lat)
-  updateSelectedLocation(lng, lat)
+  
+  if (geocoder) {
+    updateSelectedLocation(lng, lat, '', geocoder)
+  } else {
+    selectedLocation.value = {
+      lng,
+      lat,
+      name: `${lng.toFixed(6)}, ${lat.toFixed(6)}`,
+      address: '点击地图选择位置'
+    }
+  }
 }
 
 const updateMarker = (lng, lat) => {
@@ -141,20 +175,46 @@ const updateMarker = (lng, lat) => {
 }
 
 const updateSelectedLocation = (lng, lat, name = '') => {
+  console.log('开始地理编码:', lng, lat, name)
+  
+  if (!geocoder) {
+    console.error('Geocoder 未初始化')
+    selectedLocation.value = {
+      lng,
+      lat,
+      name: name || '未知位置',
+      address: '地理编码服务未就绪'
+    }
+    return
+  }
+  
   geocoder.getAddress([lng, lat], (status, result) => {
+    console.log('地理编码结果:', status, result)
+    
     if (status === 'complete' && result.regeocode) {
+      const regeocode = result.regeocode
+      let address = regeocode.formattedAddress
+      
+      if (!address && regeocode.addressComponent) {
+        const ac = regeocode.addressComponent
+        address = [ac.province, ac.city, ac.district, ac.township, ac.street]
+          .filter(Boolean)
+          .join('')
+      }
+      
       selectedLocation.value = {
         lng,
         lat,
-        name: name || result.regeocode.formattedAddress,
-        address: result.regeocode.formattedAddress
+        name: name || address || '未知位置',
+        address: address || '未知地址'
       }
     } else {
+      console.error('地理编码失败:', status, result)
       selectedLocation.value = {
         lng,
         lat,
-        name: name || `${lng.toFixed(6)}, ${lat.toFixed(6)}`,
-        address: `${lng.toFixed(6)}, ${lat.toFixed(6)}`
+        name: name || '未知位置',
+        address: '无法获取地址信息'
       }
     }
   })
@@ -176,7 +236,7 @@ const handleSearch = () => {
         lng: location.lng,
         lat: location.lat,
         name: poi.name,
-        address: poi.address || poi.pname + poi.cityname + poi.adname
+        address: poi.address || poi.pname + poi.cityname + poi.adname || '搜索结果'
       }
     } else {
       alert('未找到相关地点')
@@ -187,25 +247,73 @@ const handleSearch = () => {
 const handleLocate = () => {
   locating.value = true
   
-  const geolocation = new AMap.Geolocation({
-    enableHighAccuracy: true,
-    timeout: 10000
-  })
-  
-  geolocation.getCurrentPosition((status, result) => {
+  if (!map) {
     locating.value = false
-    
-    if (status === 'complete') {
-      const { lng, lat } = result.position
-      map.setCenter([lng, lat])
-      map.setZoom(15)
-      updateMarker(lng, lat)
-      updateSelectedLocation(lng, lat)
-    } else {
-      console.error('定位失败:', result)
-      alert('定位失败，请手动选择位置')
-    }
-  })
+    alert('地图未加载完成，请稍后再试')
+    return
+  }
+  
+  if (navigator.geolocation) {
+    navigator.geolocation.getCurrentPosition(
+      (position) => {
+        locating.value = false
+        const { latitude, longitude } = position.coords
+        
+        map.setCenter([longitude, latitude])
+        map.setZoom(15)
+        updateMarker(longitude, latitude)
+        
+        if (geocoder) {
+          geocoder.getAddress([longitude, latitude], (status, result) => {
+            if (status === 'complete' && result.regeocode) {
+              const regeocode = result.regeocode
+              let address = regeocode.formattedAddress
+              
+              if (!address && regeocode.addressComponent) {
+                const ac = regeocode.addressComponent
+                address = [ac.province, ac.city, ac.district, ac.township, ac.street]
+                  .filter(Boolean)
+                  .join('')
+              }
+              
+              selectedLocation.value = {
+                lng: longitude,
+                lat: latitude,
+                name: address || '当前位置',
+                address: address || '未知地址'
+              }
+            } else {
+              selectedLocation.value = {
+                lng: longitude,
+                lat: latitude,
+                name: `${longitude.toFixed(6)}, ${latitude.toFixed(6)}`,
+                address: '当前位置'
+              }
+            }
+          })
+        } else {
+          selectedLocation.value = {
+            lng: longitude,
+            lat: latitude,
+            name: `${longitude.toFixed(6)}, ${latitude.toFixed(6)}`,
+            address: '当前位置'
+          }
+        }
+      },
+      (error) => {
+        locating.value = false
+        console.error('浏览器定位失败:', error)
+        alert('定位失败，请手动选择位置')
+      },
+      {
+        enableHighAccuracy: true,
+        timeout: 10000
+      }
+    )
+  } else {
+    locating.value = false
+    alert('您的浏览器不支持定位功能，请手动选择位置')
+  }
 }
 
 const handleConfirm = () => {

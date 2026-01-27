@@ -259,18 +259,23 @@ const handleSubmit = () => {
   if (!isValid.value) return
   
   const record = {
-    id: Date.now(),
     title: form.title.trim(),
     date: form.date,
     type: form.type,
     level: form.level,
     description: form.description.trim(),
-    location: form.location,
+    location: form.location ? JSON.stringify({
+      lng: form.location.lng,
+      lat: form.location.lat,
+      name: form.location.name,
+      address: form.location.address
+    }) : null,
     tags: [...form.tags],
     photos: form.type === 'photo' ? form.photos : [],
     videos: form.type === 'video' ? form.videos : []
   }
   
+  console.log('提交记录数据:', record)
   emit('save', record)
 }
 

@@ -13,10 +13,10 @@
     :class="{ 'is-dragging': isDragging }"
   >
     <!-- 时间轴选择器 -->
-    <TimelineSelector />
+    <TimelineSelector @openStats="handleOpenStats" />
     
     <!-- 右下角放大缩小按钮 -->
-    <div class="zoom-controls">
+    <div class="zoom-controls" style="display: none;">
       <button class="zoom-btn" @click="zoomIn" title="放大">
         <svg viewBox="0 0 24 24" width="20" height="20">
           <path fill="currentColor" d="M19 13h-6v6h-2v-6H5v-2h6V5h2v6h6v2z"/>
@@ -154,7 +154,7 @@ import EmptyStateBubble from './EmptyStateBubble.vue'
 import TimelineSelector from './TimelineSelector.vue'
 import { useTimeline } from '../composables/useTimeline'
 
-const emit = defineEmits(['select', 'add'])
+const emit = defineEmits(['select', 'add', 'openStats'])
 
 const containerRef = ref(null)
 const timelineWrapper = ref(null)
@@ -185,6 +185,10 @@ const timelineWrapper = ref(null)
 const handleNodeClick = (record) => {
   selectRecord(record)
   emit('select', record)
+}
+
+const handleOpenStats = () => {
+  emit('openStats')
 }
 
 const handleContainerMouseDown = (e) => {

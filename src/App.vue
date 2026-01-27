@@ -1,7 +1,7 @@
 <template>
   <div class="app">
     <GridBackground />
-    <Timeline :records="store.records" @select="openDetail" @add="openAddModal" />
+    <Timeline :records="store.records" @select="openDetail" @add="openAddModal" @openStats="openStats" />
     <DetailModal 
       v-if="store.selectedRecord" 
       :record="store.selectedRecord"
@@ -11,6 +11,11 @@
       v-if="showAddModal"
       @close="closeAddModal"
       @save="saveNewRecord"
+    />
+    <Statistics 
+      v-if="showStats"
+      :visible="showStats"
+      @close="closeStats"
     />
     <!-- 创建第一个时间轴的弹窗 -->
     <CreateFirstTimelineModal
@@ -27,11 +32,13 @@ import GridBackground from './components/GridBackground.vue'
 import Timeline from './components/Timeline.vue'
 import DetailModal from './components/DetailModal.vue'
 import AddRecordModal from './components/AddRecordModal.vue'
+import Statistics from './components/Statistics.vue'
 import CreateFirstTimelineModal from './components/CreateFirstTimelineModal.vue'
 import { useTimelineStore } from './stores/timeline'
 
 const store = useTimelineStore()
 const showAddModal = ref(false)
+const showStats = ref(false)
 const showCreateTimelineModal = ref(false)
 
 const openDetail = (record) => {
@@ -48,6 +55,14 @@ const openAddModal = () => {
 
 const closeAddModal = () => {
   showAddModal.value = false
+}
+
+const openStats = () => {
+  showStats.value = true
+}
+
+const closeStats = () => {
+  showStats.value = false
 }
 
 const closeCreateTimelineModal = () => {
